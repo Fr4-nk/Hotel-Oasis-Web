@@ -6,11 +6,37 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
 import math
 from functools import wraps
+import os
+import re
 
 app = Flask(__name__)
 app.secret_key = 'hoteloasis2024'
 
 def conectar():
+    # Para Railway (usando MYSQL_URL)
+    mysql_url = os.environ.get('MYSQL_URL')
+    
+    if mysql_url:
+        # Parsear la URL que Railway genera
+        # Formato: mysql://usuario:contraseña@host:port/nombre_bd
+        patron = r'mysql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)'
+        match = re.match(patron, mysql_url)
+        if match:
+            usuario = match.group(1)
+            password = match.group(2)
+            host = match.group(3)
+            puerto = int(match.group(4))
+            bd = match.group(5)
+            
+            return pymysql.connect(
+                host=host,
+                user=usuario,
+                password=password,
+                database=bd,
+                cursorclass=pymysql.cursors.DictCursor
+            )
+    
+    # Para desarrollo local (cuando pruebas en tu PC)
     return pymysql.connect(
         host='localhost',
         user='root',
