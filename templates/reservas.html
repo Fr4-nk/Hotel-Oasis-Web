@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Reservas{% endblock %}
+{% block content %}
+<div class="container">
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="numero">{{ reservas | selectattr('ESTADO', 'equalto', 'Confirmada') | list | length }}</div>
+            <div class="label">Confirmadas</div>
+        </div>
+        <div class="stat-card ocupada">
+            <div class="numero">{{ reservas | selectattr('ESTADO', 'equalto', 'Cancelada') | list | length }}</div>
+            <div class="label">Canceladas</div>
+        </div>
+        <div class="stat-card clientes">
+            <div class="numero">{{ reservas | selectattr('ESTADO', 'equalto', 'Finalizada') | list | length }}</div>
+            <div class="label">Finalizadas</div>
+        </div>
+        <div class="stat-card mantenimiento">
+            <div class="numero">{{ total }}</div>
+            <div class="label">Total reservas</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>📋 Reservas</h2>
+            <div style="display:flex; gap:8px;">
+                <a href="/exportar_reservas" class="btn btn-orange">⬇ Exportar Excel</a>
+                <button class="btn btn-green" onclick="document.getElementById('modalReserva').classList.add('show')">+ Nueva</button>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="tablaReservas">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Habitación</th>
+                        <th>Ingreso</th>
+                        <th>Salida</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reservas %}
+                    <tr>
+                        <td>{{ r.NOMBRE }}</td>
+                        <td>N° {{ r.NUMERO }}</td>
+                        <td>{{ r.FECHA_INGRESO.strftime('%d/%m/%Y') if r.FECHA_INGRESO else r.FECHA_INGRESO }}</td>
+                        <td>{{ r.FECHA_SALIDA.strftime('%d/%m/%Y') if r.FECHA_SALIDA else r.FECHA_SALIDA }}</td>
+                        <td><span class="badge {{ r.ESTADO }}">{{ r.ESTADO }}</span></td>
+                        <td>
+                            <button class="btn btn-blue" style="padding:5px 12px; font-size:12px;"
+                                data-id="{{ r.ID_RESERVA }}"
+                                data-estado="{{ r.ESTADO }}"
+                                onclick="abrirEditarBtn(this)">
+                                Editar Estado
+                            </button>
+                            {% if session.get('rol') == 'Administrador' %}
+                            <form method="POST" action="/eliminar_reserva/{{ r.ID_RESERVA }}" style="display:inline;"
+                                onsubmit="return confirm('¿Eliminar esta reserva?')">
+                                <button class="btn btn-red" style="padding:5px 12px; font-size:12px;">Eliminar</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if total_paginas > 1 %}
+        <div style="padding: 20px; text-align: center;">
+            <div style="display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                {% if pagina > 1 %}
+                <a href="?pagina={{ pagina-1 }}" class="btn btn-blue">← Anterior</a>
+                {% endif %}
+                
+                {% for p in range(1, total_paginas + 1) %}
+                    {% if p == pagina %}
+                    <span style="background: #1a4a2e; color: white; padding: 6px 12px; border-radius: 6px;">{{ p }}</span>
+                    {% else %}
+                    <a href="?pagina={{ p }}" style="padding: 6px 12px; background: #f0f0f0; border-radius: 6px; text-decoration: none; color: #333;">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagina < total_paginas %}
+                <a href="?pagina={{ pagina+1 }}" class="btn btn-blue">Siguiente →</a>
+                {% endif %}
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                Mostrando {{ reservas|length }} de {{ total }} reservas
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal NUEVA reserva -->
+<div class="modal-overlay" id="modalReserva">
+    <div class="modal-box">
+        <h3>➕ Nueva Reserva</h3>
+        <form method="POST" action="/registrar_reserva">
+            <select name="id_cliente" required>
+                <option value="">Seleccionar cliente</option>
+                {% for c in clientes %}
+                <option value="{{ c.ID_CLIENTE }}">{{ c.NOMBRE }} — {{ c.DNI }}</option>
+                {% endfor %}
+            </select>
+            <select name="id_habitacion" required>
+                <option value="">Seleccionar habitación disponible</option>
+                {% for h in habitaciones %}
+                <option value="{{ h.ID_HABITACION }}">N° {{ h.NUMERO }} — {{ h.TIPO }} — S/. {{ "%.2f"|format(h.PRECIO) }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="fecha_ingreso" required>
+            <input type="date" name="fecha_salida" required>
+            <div class="modal-actions">
+                <button type="submit" style="background:#2d7a4f; color:white;">Registrar</button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('modalReserva').classList.remove('show')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal EDITAR reserva -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal-box">
+        <h3>✏️ Editar Estado de Reserva</h3>
+        <form method="POST" action="/editar_reserva">
+            <input type="hidden" name="id" id="edit_id">
+            <select name="estado" id="edit_estado">
+                <option value="Confirmada">Confirmada</option>
+                <option value="Cancelada">Cancelada</option>
+                <option value="Finalizada">Finalizada</option>
+            </select>
+            <div class="modal-actions">
+                <button type="submit" style="background:#185fa5; color:white;">Actualizar</button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('modalEditar').classList.remove('show')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filtrar() {
+    const texto = document.getElementById('buscador').value.toLowerCase();
+    const filas = document.querySelectorAll('#tablaReservas tbody tr');
+    filas.forEach(fila => {
+        fila.style.display = fila.innerText.toLowerCase().includes(texto) ? '' : 'none';
+    });
+}
+
+function abrirEditar(id, estado) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_estado').value = estado;
+    document.getElementById('modalEditar').classList.add('show');
+}
+
+function abrirEditarBtn(btn) {
+    abrirEditar(
+        btn.dataset.id,
+        btn.dataset.estado
+    );
+}
+</script>
+{% endblock %}

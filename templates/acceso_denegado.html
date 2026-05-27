@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Acceso Denegado{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:center; align-items:center; min-height:80vh;">
+    <div style="text-align:center; background:white; padding:50px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+        <div style="font-size:60px;">🚫</div>
+        <h2 style="color:#a32d2d; margin:16px 0 8px;">Acceso Denegado</h2>
+        <p style="color:#666; margin-bottom:24px;">No tienes permisos para realizar esta acción.</p>
+        <a href="/habitaciones" class="btn btn-green">Volver al inicio</a>
+    </div>
+</div>
+{% endblock %}

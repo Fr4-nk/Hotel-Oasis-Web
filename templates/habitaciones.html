@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% block title %}Habitaciones{% endblock %}
+{% block content %}
+<div class="container">
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="numero">{{ habitaciones | selectattr('ESTADO', 'equalto', 'Disponible') | list | length }}</div>
+            <div class="label">Disponibles</div>
+        </div>
+        <div class="stat-card ocupada">
+            <div class="numero">{{ habitaciones | selectattr('ESTADO', 'equalto', 'Ocupada') | list | length }}</div>
+            <div class="label">Ocupadas</div>
+        </div>
+        <div class="stat-card mantenimiento">
+            <div class="numero">{{ habitaciones | selectattr('ESTADO', 'equalto', 'Mantenimiento') | list | length }}</div>
+            <div class="label">Mantenimiento</div>
+        </div>
+        <div class="stat-card clientes">
+            <div class="numero">{{ total }}</div>
+            <div class="label">Total habitaciones</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>🛏️ Habitaciones</h2>
+            <div style="display:flex; gap:8px;">
+                <a href="/exportar_habitaciones" class="btn btn-orange">⬇ Exportar Excel</a>
+                {% if session.get('rol') == 'Administrador' %}
+                <button class="btn btn-green" onclick="document.getElementById('modalHab').classList.add('show')">+ Nueva</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="padding: 16px; border-bottom: 1px solid #f0f0f0;">
+            <form method="GET" action="/habitaciones" style="display: flex; gap: 8px;">
+                <input type="text" name="busqueda" placeholder="Buscar por número o tipo..." value="{{ busqueda }}"
+                    style="flex: 1; padding: 8px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                <button type="submit" class="btn btn-blue">Buscar</button>
+                {% if busqueda %}
+                <a href="/habitaciones" class="btn btn-orange">Limpiar</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="tablaHab">
+                <thead>
+                    <tr>
+                        <th>N° Hab.</th>
+                        <th>Tipo</th>
+                        <th>Precio</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in habitaciones %}
+                    <tr>
+                        <td>{{ h.NUMERO }}</td>
+                        <td>{{ h.TIPO }}</td>
+                        <td>S/. {{ "%.2f"|format(h.PRECIO) }}</td>
+                        <td><span class="badge {{ h.ESTADO }}">{{ h.ESTADO }}</span></td>
+                        <td>
+                            <button class="btn btn-blue" style="padding:5px 12px; font-size:12px;"
+                                onclick="abrirEditar('{{ h.ID_HABITACION }}','{{ h.NUMERO }}','{{ h.TIPO }}','{{ h.PRECIO }}','{{ h.ESTADO }}')">
+                                Editar
+                            </button>
+                            {% if session.get('rol') == 'Administrador' %}
+                            <form method="POST" action="/eliminar_habitacion/{{ h.ID_HABITACION }}" style="display:inline;"
+                                onsubmit="return confirm('¿Eliminar habitación {{ h.NUMERO }}?')">
+                                <button class="btn btn-red" style="padding:5px 12px; font-size:12px;">Eliminar</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if total_paginas > 1 %}
+        <div style="padding: 20px; text-align: center;">
+            <div style="display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                {% if pagina > 1 %}
+                <a href="?pagina={{ pagina-1 }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}" class="btn btn-blue">← Anterior</a>
+                {% endif %}
+                
+                {% for p in range(1, total_paginas + 1) %}
+                    {% if p == pagina %}
+                    <span style="background: #1a4a2e; color: white; padding: 6px 12px; border-radius: 6px;">{{ p }}</span>
+                    {% else %}
+                    <a href="?pagina={{ p }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}" style="padding: 6px 12px; background: #f0f0f0; border-radius: 6px; text-decoration: none; color: #333;">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagina < total_paginas %}
+                <a href="?pagina={{ pagina+1 }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}" class="btn btn-blue">Siguiente →</a>
+                {% endif %}
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                Mostrando {{ habitaciones|length }} de {{ total }} habitaciones
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if session.get('rol') == 'Administrador' %}
+<!-- Modal NUEVA habitación -->
+<div class="modal-overlay" id="modalHab">
+    <div class="modal-box">
+        <h3>➕ Nueva Habitación</h3>
+        <form method="POST" action="/agregar_habitacion">
+            <input type="text" name="numero" placeholder="Número de habitación" required>
+            <select name="tipo" required>
+                <option value="">Seleccionar tipo</option>
+                <option value="Simple">Simple</option>
+                <option value="Doble">Doble</option>
+                <option value="Matrimonial">Matrimonial</option>
+            </select>
+            <input type="number" name="precio" placeholder="Precio (S/.)" step="0.01" required>
+            <select name="estado">
+                <option value="Disponible">Disponible</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+            </select>
+            <div class="modal-actions">
+                <button type="submit" style="background:#2d7a4f; color:white;">Guardar</button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('modalHab').classList.remove('show')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal EDITAR habitación -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal-box">
+        <h3>✏️ Editar Habitación</h3>
+        <form method="POST" action="/editar_habitacion">
+            <input type="hidden" name="id" id="edit_id">
+            <input type="text" name="numero" id="edit_numero" placeholder="Número" required>
+            <select name="tipo" id="edit_tipo">
+                <option value="Simple">Simple</option>
+                <option value="Doble">Doble</option>
+                <option value="Matrimonial">Matrimonial</option>
+            </select>
+            <input type="number" name="precio" id="edit_precio" placeholder="Precio" step="0.01" required>
+            <select name="estado" id="edit_estado">
+                <option value="Disponible">Disponible</option>
+                <option value="Ocupada">Ocupada</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+            </select>
+            <div class="modal-actions">
+                <button type="submit" style="background:#185fa5; color:white;">Actualizar</button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('modalEditar').classList.remove('show')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filtrar() {
+    const texto = document.getElementById('buscador').value.toLowerCase();
+    const filas = document.querySelectorAll('#tablaHab tbody tr');
+    filas.forEach(fila => {
+        fila.style.display = fila.innerText.toLowerCase().includes(texto) ? '' : 'none';
+    });
+}
+
+function abrirEditar(id, numero, tipo, precio, estado) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_numero').value = numero;
+    document.getElementById('edit_tipo').value = tipo;
+    document.getElementById('edit_precio').value = precio;
+    document.getElementById('edit_estado').value = estado;
+    document.getElementById('modalEditar').classList.add('show');
+}
+</script>
+{% endblock %}

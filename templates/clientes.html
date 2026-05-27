@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Clientes{% endblock %}
+{% block content %}
+<div class="container">
+
+    <div class="stats-grid">
+        <div class="stat-card clientes">
+            <div class="numero">{{ total }}</div>
+            <div class="label">Total clientes</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>👥 Clientes</h2>
+            <div style="display:flex; gap:8px;">
+                <a href="/exportar_clientes" class="btn btn-orange">⬇ Exportar Excel</a>
+                <button class="btn btn-green" onclick="document.getElementById('modalCliente').classList.add('show')">+ Registrar</button>
+            </div>
+        </div>
+
+        <div style="padding: 16px; border-bottom: 1px solid #f0f0f0;">
+            <form method="GET" action="/clientes" style="display: flex; gap: 8px;">
+                <input type="text" name="busqueda" placeholder="Buscar por nombre o DNI..." value="{{ busqueda }}"
+                    style="flex: 1; padding: 8px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                <button type="submit" class="btn btn-blue">Buscar</button>
+                {% if busqueda %}
+                <a href="/clientes" class="btn btn-orange">Limpiar</a>
+                {% endif %}
+            </form>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="tablaClientes">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>DNI</th>
+                        <th>Teléfono</th>
+                        <th>Email</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in clientes %}
+                    <tr>
+                        <td>{{ c.NOMBRE }}</td>
+                        <td>{{ c.DNI }}</td>
+                        <td>{{ c.TELEFONO or '—' }}</td>
+                        <td>{{ c.EMAIL or '—' }}</td>
+                        <td>
+                            <button class="btn btn-blue" style="padding:5px 12px; font-size:12px;"
+                                data-id="{{ c.ID_CLIENTE }}"
+                                data-nombre="{{ c.NOMBRE }}"
+                                data-dni="{{ c.DNI }}"
+                                data-telefono="{{ c.TELEFONO or '' }}"
+                                data-email="{{ c.EMAIL or '' }}"
+                                onclick="abrirEditarBtn(this)">
+                                Editar
+                            </button>
+                            {% if session.get('rol') == 'Administrador' %}
+                            <form method="POST" action="/eliminar_cliente/{{ c.ID_CLIENTE }}" style="display:inline;"
+                                onsubmit="return confirm('¿Eliminar cliente {{ c.NOMBRE }}? Esta acción no se puede deshacer.')">
+                                <button class="btn btn-red" style="padding:5px 12px; font-size:12px;">Eliminar</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if total_paginas > 1 %}
+        <div style="padding: 20px; text-align: center;">
+            <div style="display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                {% if pagina > 1 %}
+                <a href="?pagina={{ pagina-1 }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}" class="btn btn-blue">← Anterior</a>
+                {% endif %}
+                
+                {% for p in range(1, total_paginas + 1) %}
+                    {% if p == pagina %}
+                    <span style="background: #1a4a2e; color: white; padding: 6px 12px; border-radius: 6px;">{{ p }}</span>
+                    {% else %}
+                    <a href="?pagina={{ p }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}" style="padding: 6px 12px; background: #f0f0f0; border-radius: 6px; text-decoration: none; color: #333;">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagina < total_paginas %}
+                <a href="?pagina={{ pagina+1 }}{% if busqueda %}&busqueda={{ busqueda }}{% endif %}" class="btn btn-blue">Siguiente →</a>
+                {% endif %}
+            </div>
+            <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                Mostrando {{ clientes|length }} de {{ total }} clientes
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal REGISTRAR cliente -->
+<div class="modal-overlay" id="modalCliente">
+    <div class="modal-box">
+        <h3>➕ Registrar Cliente</h3>
+        <form method="POST" action="/registrar_cliente">
+            <input type="text" name="nombre" placeholder="Nombre completo" required>
+            <input type="text" name="dni" placeholder="DNI (8 dígitos)" maxlength="8" required>
+            <input type="text" name="telefono" placeholder="Teléfono (opcional)">
+            <input type="email" name="email" placeholder="Email (opcional)">
+            <div class="modal-actions">
+                <button type="submit" style="background:#2d7a4f; color:white;">Registrar</button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('modalCliente').classList.remove('show')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal EDITAR cliente -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal-box">
+        <h3>✏️ Editar Cliente</h3>
+        <form method="POST" action="/editar_cliente">
+            <input type="hidden" name="id" id="edit_id">
+            <input type="text" name="nombre" id="edit_nombre" placeholder="Nombre completo" required>
+            <input type="text" name="dni" id="edit_dni" placeholder="DNI" maxlength="8" required>
+            <input type="text" name="telefono" id="edit_telefono" placeholder="Teléfono">
+            <input type="email" name="email" id="edit_email" placeholder="Email">
+            <div class="modal-actions">
+                <button type="submit" style="background:#185fa5; color:white;">Actualizar</button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('modalEditar').classList.remove('show')">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filtrar() {
+    const texto = document.getElementById('buscador').value.toLowerCase();
+    const filas = document.querySelectorAll('#tablaClientes tbody tr');
+    filas.forEach(fila => {
+        fila.style.display = fila.innerText.toLowerCase().includes(texto) ? '' : 'none';
+    });
+}
+
+function abrirEditar(id, nombre, dni, telefono, email) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_nombre').value = nombre;
+    document.getElementById('edit_dni').value = dni;
+    document.getElementById('edit_telefono').value = telefono;
+    document.getElementById('edit_email').value = email;
+    document.getElementById('modalEditar').classList.add('show');
+}
+
+function abrirEditarBtn(btn) {
+    abrirEditar(
+        btn.dataset.id,
+        btn.dataset.nombre,
+        btn.dataset.dni,
+        btn.dataset.telefono,
+        btn.dataset.email
+    );
+}
+</script>
+{% endblock %}

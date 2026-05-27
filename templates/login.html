@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar Sesión{% endblock %}
+{% block content %}
+<style>
+    body { 
+        background: linear-gradient(135deg, #1a4a2e, #2d7a4f);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .login-wrapper {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+    .login-logo {
+        font-size: 48px;
+        margin-bottom: 8px;
+    }
+    .login-title {
+        font-size: 26px;
+        font-weight: bold;
+        color: #1a4a2e;
+        margin-bottom: 4px;
+    }
+    .login-subtitle {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 30px;
+    }
+    .login-card input {
+        width: 100%;
+        padding: 12px 16px;
+        margin: 8px 0;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: border 0.2s;
+    }
+    .login-card input:focus {
+        outline: none;
+        border-color: #2d7a4f;
+    }
+    .login-btn {
+        width: 100%;
+        padding: 13px;
+        background: #1a4a2e;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: background 0.2s;
+    }
+    .login-btn:hover { background: #2d7a4f; }
+    .error {
+        background: #fcebeb;
+        color: #a32d2d;
+        padding: 10px 16px;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-size: 13px;
+    }
+    .footer-text {
+        margin-top: 24px;
+        font-size: 12px;
+        color: #aaa;
+    }
+</style>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-logo">🌿</div>
+        <div class="login-title">Hotel Oasis</div>
+        <div class="login-subtitle">Sistema de Gestión Hotelera — Iquitos, Perú</div>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <input type="text" name="usuario" placeholder="Usuario" required autofocus>
+            <input type="password" name="clave" placeholder="Contraseña" required>
+            <button type="submit" class="login-btn">INGRESAR</button>
+        </form>
+
+        <div class="footer-text">Versión 2.0 • 2025</div>
+    </div>
+</div>
+{% endblock %}

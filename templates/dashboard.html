@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="numero">{{ total_habitaciones }}</div>
+            <div class="label">Total Habitaciones</div>
+        </div>
+        <div class="stat-card">
+            <div class="numero">{{ disponibles }}</div>
+            <div class="label">Disponibles</div>
+        </div>
+        <div class="stat-card ocupada">
+            <div class="numero">{{ ocupadas }}</div>
+            <div class="label">Ocupadas</div>
+        </div>
+        <div class="stat-card clientes">
+            <div class="numero">{{ total_clientes }}</div>
+            <div class="label">Clientes Registrados</div>
+        </div>
+        <div class="stat-card mantenimiento">
+            <div class="numero">{{ reservas_activas }}</div>
+            <div class="label">Reservas Activas</div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>📊 Resumen del Hotel</h2>
+        </div>
+        <div style="padding: 30px; text-align: center;">
+            <h3 style="color: #1a4a2e;">🏨 Hotel Oasis - Iquitos, Perú</h3>
+            <p style="margin-top: 20px;">Sistema de gestión hotelera funcionando correctamente.</p>
+            <p>✅ Todas las funcionalidades activas</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

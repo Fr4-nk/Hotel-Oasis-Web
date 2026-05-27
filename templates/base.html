@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Oasis - {% block title %}{% endblock %}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica', sans-serif; background: #f0f4f0; }
+
+        .navbar {
+            background: #1a4a2e;
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar .logo {
+            color: #f4a261;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .navbar .logo span { color: #c0dd97; font-size: 13px; display: block; font-weight: normal; }
+        .navbar .links { display: flex; gap: 8px; align-items: center; }
+        .navbar .links a {
+            color: #c0dd97;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .navbar .links a:hover { background: #2d7a4f; }
+        .navbar .links a.active { background: #2d7a4f; color: white; }
+        .navbar .links a.logout { background: #7a2d2d; color: #f7c1c1; }
+        .navbar .links a.logout:hover { background: #a32d2d; }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .hamburger span {
+            width: 25px; height: 2px;
+            background: #c0dd97;
+            border-radius: 2px;
+            transition: 0.3s;
+        }
+
+        .flash-container {
+            max-width: 1200px;
+            margin: 16px auto;
+            padding: 0 30px;
+        }
+        .flash-msg {
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+        .flash-msg.success {
+            background: #eaf3de;
+            color: #3b6d11;
+            border-left: 4px solid #2d7a4f;
+        }
+        .flash-msg.danger {
+            background: #fcebeb;
+            color: #a32d2d;
+            border-left: 4px solid #a32d2d;
+        }
+        .flash-msg .cerrar {
+            cursor: pointer;
+            font-size: 18px;
+            color: inherit;
+            opacity: 0.6;
+            margin-left: 16px;
+        }
+        .flash-msg .cerrar:hover { opacity: 1; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .container { padding: 30px; max-width: 1200px; margin: 0 auto; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border-left: 4px solid #2d7a4f;
+        }
+        .stat-card .numero { font-size: 28px; font-weight: bold; color: #1a4a2e; }
+        .stat-card .label { font-size: 13px; color: #666; margin-top: 4px; }
+        .stat-card.ocupada { border-left-color: #a32d2d; }
+        .stat-card.ocupada .numero { color: #a32d2d; }
+        .stat-card.mantenimiento { border-left-color: #ba7517; }
+        .stat-card.mantenimiento .numero { color: #ba7517; }
+        .stat-card.clientes { border-left-color: #185fa5; }
+        .stat-card.clientes .numero { color: #185fa5; }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .card-header {
+            background: #1a4a2e;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h2 { color: #c0dd97; font-size: 16px; font-weight: 500; }
+
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-green { background: #2d7a4f; color: white; }
+        .btn-red { background: #a32d2d; color: white; }
+        .btn-blue { background: #185fa5; color: white; }
+        .btn-orange { background: #ba7517; color: white; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8faf8; color: #1a4a2e; padding: 12px 16px; text-align: left; font-size: 13px; border-bottom: 2px solid #e0ebe0; }
+        td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f0f0f0; color: #333; }
+        tr:hover td { background: #f8faf8; }
+
+        .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .badge.Disponible { background: #eaf3de; color: #3b6d11; }
+        .badge.Ocupada { background: #fcebeb; color: #a32d2d; }
+        .badge.Mantenimiento { background: #faeeda; color: #854f0b; }
+        .badge.Confirmada { background: #eaf3de; color: #3b6d11; }
+        .badge.Cancelada { background: #fcebeb; color: #a32d2d; }
+        .badge.Finalizada { background: #e6f1fb; color: #185fa5; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 420px;
+            max-width: 95%;
+        }
+        .modal-box h3 { color: #1a4a2e; margin-bottom: 20px; font-size: 18px; }
+        .modal-box input, .modal-box select {
+            width: 100%;
+            padding: 10px 14px;
+            margin: 6px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .modal-box input:focus, .modal-box select:focus {
+            outline: none;
+            border-color: #2d7a4f;
+        }
+        .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+        .modal-actions button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .btn-cancelar { background: #eee; color: #555; }
+
+        @media (max-width: 768px) {
+            .hamburger { display: flex; }
+            .navbar .links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 60px; left: 0; right: 0;
+                background: #1a4a2e;
+                padding: 16px;
+                gap: 8px;
+                z-index: 99;
+            }
+            .navbar .links.open { display: flex; }
+            .navbar .links a { width: 100%; text-align: center; }
+            .container { padding: 16px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .flash-container { padding: 0 16px; }
+        }
+    </style>
+</head>
+<body>
+    {% if request.path != '/login' %}
+    <nav class="navbar">
+        <div class="logo">
+            🌿 HOTEL OASIS
+            <span>Sistema de Gestión</span>
+        </div>
+<div class="links" id="navLinks">
+    <a href="/dashboard" {% if request.path == '/dashboard' %}class="active"{% endif %}>Dashboard</a>
+    <a href="/habitaciones" {% if request.path == '/habitaciones' %}class="active"{% endif %}>Habitaciones</a>
+    <a href="/clientes" {% if request.path == '/clientes' %}class="active"{% endif %}>Clientes</a>
+    <a href="/reservas" {% if request.path == '/reservas' %}class="active"{% endif %}>Reservas</a>
+    <a href="/logout" class="logout">Cerrar sesión</a>
+</div>
+        <div class="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-container">
+            {% for category, message in messages %}
+            <div class="flash-msg {{ category }}" id="flash-{{ loop.index }}">
+                {{ message }}
+                <span class="cerrar" onclick="document.getElementById('flash-{{ loop.index }}').style.display='none'">✕</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.flash-msg').forEach(el => {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(() => el.style.display = 'none', 500);
+            });
+        }, 3000);
+    </script>
+</body>
+</html>
