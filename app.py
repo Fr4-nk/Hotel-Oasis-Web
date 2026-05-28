@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for, send_file, flash
 import pymysql
 import io
 import openpyxl
@@ -18,7 +18,6 @@ def conectar():
     
     if mysql_url:
         # Parsear la URL que Railway genera
-        # Formato: mysql://usuario:contraseña@host:port/nombre_bd
         patron = r'mysql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)'
         match = re.match(patron, mysql_url)
         if match:
@@ -96,7 +95,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# ─── HABITACIONES CON PAGINACIÓN ───────────────────────
+# ─── HABITACIONES ───────────────────────────────────────
 
 @app.route('/habitaciones')
 @login_requerido
@@ -110,7 +109,6 @@ def habitaciones():
     conn = conectar()
     cursor = conn.cursor()
     
-    # Contar total
     if busqueda:
         cursor.execute("""
             SELECT COUNT(*) as total FROM HABITACIONES 
@@ -122,7 +120,6 @@ def habitaciones():
     total = cursor.fetchone()['total']
     total_paginas = math.ceil(total / por_pagina)
     
-    # Obtener datos paginados
     if busqueda:
         cursor.execute("""
             SELECT * FROM HABITACIONES 
@@ -153,7 +150,6 @@ def agregar_habitacion():
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Validar que el número de habitación no exista
         cursor.execute("SELECT COUNT(*) as count FROM HABITACIONES WHERE NUMERO=%s", (numero,))
         if cursor.fetchone()['count'] > 0:
             flash('❌ Ya existe una habitación con ese número', 'danger')
@@ -183,7 +179,6 @@ def editar_habitacion():
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Validar que el número no pertenezca a otra habitación
         cursor.execute("SELECT COUNT(*) as count FROM HABITACIONES WHERE NUMERO=%s AND ID_HABITACION!=%s", (numero, id_hab))
         if cursor.fetchone()['count'] > 0:
             flash('❌ Ya existe otra habitación con ese número', 'danger')
@@ -207,7 +202,6 @@ def eliminar_habitacion(id):
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Verificar si tiene reservas activas
         cursor.execute("SELECT COUNT(*) as count FROM RESERVAS WHERE ID_HABITACION=%s AND ESTADO='Confirmada'", (id,))
         if cursor.fetchone()['count'] > 0:
             flash('❌ No se puede eliminar la habitación porque tiene reservas activas', 'danger')
@@ -257,7 +251,7 @@ def exportar_habitaciones():
     output.seek(0)
     return send_file(output, download_name='habitaciones.xlsx', as_attachment=True)
 
-# ─── CLIENTES CON PAGINACIÓN ───────────────────────────
+# ─── CLIENTES ───────────────────────────────────────────
 
 @app.route('/clientes')
 @login_requerido
@@ -271,7 +265,6 @@ def clientes():
     conn = conectar()
     cursor = conn.cursor()
     
-    # Contar total
     if busqueda:
         cursor.execute("""
             SELECT COUNT(*) as total FROM CLIENTES 
@@ -283,7 +276,6 @@ def clientes():
     total = cursor.fetchone()['total']
     total_paginas = math.ceil(total / por_pagina)
     
-    # Obtener datos paginados
     if busqueda:
         cursor.execute("""
             SELECT * FROM CLIENTES 
@@ -311,7 +303,6 @@ def registrar_cliente():
     telefono = request.form.get('telefono', '')
     email = request.form.get('email', '')
     
-    # Validar DNI
     if not dni.isdigit() or len(dni) != 8:
         flash('❌ DNI debe tener 8 dígitos numéricos', 'danger')
         return redirect(url_for('clientes'))
@@ -319,7 +310,6 @@ def registrar_cliente():
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Validar DNI duplicado
         cursor.execute("SELECT COUNT(*) as count FROM CLIENTES WHERE DNI=%s", (dni,))
         if cursor.fetchone()['count'] > 0:
             flash('❌ Ya existe un cliente con ese DNI', 'danger')
@@ -346,7 +336,6 @@ def editar_cliente():
     telefono = request.form.get('telefono', '')
     email = request.form.get('email', '')
     
-    # Validar DNI
     if not dni.isdigit() or len(dni) != 8:
         flash('❌ DNI debe tener 8 dígitos numéricos', 'danger')
         return redirect(url_for('clientes'))
@@ -354,7 +343,6 @@ def editar_cliente():
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Validar DNI duplicado en otro cliente
         cursor.execute("SELECT COUNT(*) as count FROM CLIENTES WHERE DNI=%s AND ID_CLIENTE!=%s", (dni, id_cliente))
         if cursor.fetchone()['count'] > 0:
             flash('❌ Ya existe otro cliente con ese DNI', 'danger')
@@ -378,7 +366,6 @@ def eliminar_cliente(id):
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Verificar si tiene reservas
         cursor.execute("SELECT COUNT(*) as count FROM RESERVAS WHERE ID_CLIENTE=%s", (id,))
         if cursor.fetchone()['count'] > 0:
             flash('❌ No se puede eliminar el cliente porque tiene reservas asociadas', 'danger')
@@ -428,7 +415,7 @@ def exportar_clientes():
     output.seek(0)
     return send_file(output, download_name='clientes.xlsx', as_attachment=True)
 
-# ─── RESERVAS CON PAGINACIÓN Y VALIDACIONES ─────────────
+# ─── RESERVAS ───────────────────────────────────────────
 
 @app.route('/reservas')
 @login_requerido
@@ -440,12 +427,10 @@ def reservas():
     conn = conectar()
     cursor = conn.cursor()
     
-    # Contar total de reservas
     cursor.execute("SELECT COUNT(*) as total FROM RESERVAS")
     total = cursor.fetchone()['total']
     total_paginas = math.ceil(total / por_pagina)
     
-    # Obtener reservas paginadas
     cursor.execute("""
         SELECT r.ID_RESERVA, c.NOMBRE, h.NUMERO,
                r.FECHA_INGRESO, r.FECHA_SALIDA, r.ESTADO
@@ -479,7 +464,6 @@ def registrar_reserva():
     fecha_ingreso = request.form['fecha_ingreso']
     fecha_salida = request.form['fecha_salida']
     
-    # Validar fechas
     hoy = datetime.now().date()
     ingreso = datetime.strptime(fecha_ingreso, '%Y-%m-%d').date()
     salida = datetime.strptime(fecha_salida, '%Y-%m-%d').date()
@@ -495,7 +479,6 @@ def registrar_reserva():
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Verificar si la habitación ya tiene reserva en esas fechas
         cursor.execute("""
             SELECT COUNT(*) as count FROM RESERVAS 
             WHERE ID_HABITACION=%s AND ESTADO='Confirmada'
@@ -528,7 +511,6 @@ def editar_reserva():
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Si se cancela o finaliza, liberar la habitación
         if estado in ['Cancelada', 'Finalizada']:
             cursor.execute("""
                 SELECT ID_HABITACION FROM RESERVAS WHERE ID_RESERVA=%s
@@ -554,7 +536,6 @@ def eliminar_reserva(id):
     conn = conectar()
     cursor = conn.cursor()
     try:
-        # Liberar habitación antes de eliminar
         cursor.execute("SELECT ID_HABITACION FROM RESERVAS WHERE ID_RESERVA=%s", (id,))
         resultado = cursor.fetchone()
         if resultado:
@@ -612,7 +593,7 @@ def exportar_reservas():
     output.seek(0)
     return send_file(output, download_name='reservas.xlsx', as_attachment=True)
 
-# ─── DASHBOARD / ESTADÍSTICAS ──────────────────────────
+# ─── DASHBOARD ──────────────────────────────────────────
 
 @app.route('/dashboard')
 @login_requerido
@@ -620,7 +601,6 @@ def dashboard():
     conn = conectar()
     cursor = conn.cursor()
     
-    # Estadísticas
     cursor.execute("SELECT COUNT(*) as total FROM HABITACIONES")
     total_habitaciones = cursor.fetchone()['total']
     
