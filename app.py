@@ -15,7 +15,7 @@ app.secret_key = 'hoteloasis2024'
 def conectar():
     # Para Railway (usando MYSQL_URL)
     mysql_url = os.environ.get('MYSQL_URL')
-    
+    print(f"DEBUG: MYSQL_URL = {mysql_url}") 
     if mysql_url:
         # Parsear la URL que Railway genera
         patron = r'mysql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)'
