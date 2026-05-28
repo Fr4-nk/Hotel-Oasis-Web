@@ -37,10 +37,11 @@ def conectar():
     
     # Para desarrollo local (cuando pruebas en tu PC)
     return pymysql.connect(
-        host='localhost',
-        user='root',
-        password='admin123',
-        database='hoteloasis',
+        host=os.environ.get('MYSQLHOST', 'localhost'),
+        port=int(os.environ.get('MYSQLPORT', 3306)),
+        user=os.environ.get('MYSQLUSER', 'root'),
+        password=os.environ.get('MYSQLPASSWORD', 'admin123'),
+        database=os.environ.get('MYSQLDATABASE', 'railway'),
         cursorclass=pymysql.cursors.DictCursor
     )
 
